@@ -6,16 +6,16 @@
   <meta name="theme-color" content="#111827" />
   <title>Lucky Tabs</title>
   <style>
-    :root { --bg:#0b1020; --panel:#121a33; --panel2:#192343; --text:#f8fafc; --muted:#9ca3af; --accent:#7c3aed; }
+    :root { --bg:#0b1020; --panel:#121a33; --panel2:#192343; --text:#f8fafc; --muted:#9ca3af; --accent:#7c3aed; --good:#22c55e; --bad:#ef4444; }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
       margin: 0; min-height: 100vh; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: radial-gradient(circle at top, #1f2a5a 0, var(--bg) 50%); color: var(--text);
-      display: grid; place-items: center; padding: 16px;
+      background: radial-gradient(circle at top, #1f2a5a 0, var(--bg) 55%); color: var(--text);
+      padding: 16px; overflow-x: hidden;
     }
     .app {
-      width: min(100%, 820px);
+      width: min(100%, 1100px); margin: 0 auto;
       background: rgba(18,26,51,.92);
       border: 1px solid rgba(255,255,255,.08);
       border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,.35);
@@ -25,87 +25,227 @@
     h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.5rem); letter-spacing: .5px; }
     .sub { color: var(--muted); margin: 0; line-height: 1.5; }
     .grid { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 16px; }
-    @media (min-width: 760px) { .grid { grid-template-columns: 320px 1fr; } }
+    @media (min-width: 900px) { .grid { grid-template-columns: 360px 1fr; } }
     .card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 20px; padding: 16px; }
-    .stats { display: grid; gap: 12px; }
-    .stat { background: var(--panel2); border-radius: 16px; padding: 14px; }
+    .stats, .inventory { display: grid; gap: 12px; }
+    .stat, .ticket-card {
+      background: var(--panel2); border-radius: 16px; padding: 14px; border: 1px solid rgba(255,255,255,.06);
+    }
     .label { color: var(--muted); font-size: .9rem; }
     .value { font-size: 1.6rem; font-weight: 800; margin-top: 4px; }
-    .actions { display: grid; gap: 12px; }
+    .actions, .row { display: grid; gap: 12px; }
+    .row { grid-template-columns: 1fr; }
+    @media (min-width: 520px) { .row { grid-template-columns: repeat(3, 1fr); } }
     button {
       border: 0; border-radius: 16px; padding: 14px 16px; font-size: 1rem; font-weight: 700;
       color: white; background: linear-gradient(135deg, var(--accent), #2563eb);
-      cursor: pointer; width: 100%; touch-action: manipulation;
+      cursor: pointer; width: 100%; touch-action: manipulation; transition: transform .15s ease, filter .15s ease, opacity .15s ease;
     }
-    button:disabled { opacity: .5; cursor: not-allowed; }
+    button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
     .secondary { background: rgba(255,255,255,.08); }
-    .ticket { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+    .danger { background: linear-gradient(135deg, #be123c, #ef4444); }
+    .ticket-types { display: grid; gap: 12px; }
+    .type-btn {
+      text-align: left; display: grid; gap: 6px; padding: 16px; border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .type-btn small { color: var(--muted); font-size: .92rem; }
+    .ticket-list { display: grid; gap: 10px; }
+    .ticket-item {
+      display: grid; gap: 10px; padding: 14px; border-radius: 18px;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.06);
+    }
+    .ticket-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .badge { padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.08); color: var(--muted); font-size: .82rem; }
+    .badge.open { color: #fde68a; }
+    .badge.done { color: #86efac; }
+    .badge.redeemed { color: #93c5fd; }
+    .ticket-mode {
+      display: none; position: fixed; inset: 0; z-index: 100; background: rgba(3,7,18,.92); backdrop-filter: blur(12px);
+      padding: 16px;
+    }
+    body.ticket-active .ticket-mode { display: grid; place-items: center; }
+    body.ticket-active .app .hero,
+    body.ticket-active .app .grid { display: none; }
+    .ticket-stage {
+      width: min(100%, 720px); background: rgba(18,26,51,.98); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 28px; box-shadow: 0 20px 60px rgba(0,0,0,.45); padding: 18px;
+      transform-origin: center; animation: pop .22s ease-out;
+    }
+    @keyframes pop { from { transform: scale(.96); opacity: .3; } to { transform: scale(1); opacity: 1; } }
+    .ticket-top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .ticket-title { margin: 0; font-size: clamp(1.5rem, 4vw, 2.4rem); }
+    .ticket-meta { color: var(--muted); margin-top: 4px; line-height: 1.5; }
+    .ticket-grid {
+      display: grid; gap: 12px; margin-top: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    @media (min-width: 560px) { .ticket-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
     .tab {
       aspect-ratio: 1; border-radius: 16px; display: grid; place-items: center; font-weight: 900;
       font-size: clamp(1rem, 3.8vw, 1.4rem); background: linear-gradient(180deg, #334155, #1f2937);
-      border: 1px solid rgba(255,255,255,.08); user-select: none; min-height: 62px;
+      border: 1px solid rgba(255,255,255,.08); user-select: none; min-height: 72px; position: relative;
       touch-action: none; -webkit-user-select: none; -webkit-touch-callout: none;
-      transition: transform .08s ease, filter .12s ease, background .2s ease;
+      transition: transform .08s ease, filter .12s ease, background .2s ease, box-shadow .2s ease;
+      overflow: hidden;
     }
-    .tab::after { content: 'PULL'; letter-spacing: .08em; font-size: .74em; color: rgba(255,255,255,.65); }
-    .tab.pulling { transform: translateY(12px) scale(.985); filter: brightness(1.08); }
+    .tab::after {
+      content: 'PULL'; letter-spacing: .08em; font-size: .72em; color: rgba(255,255,255,.66);
+      position: absolute; inset: auto 0 12px; text-align: center;
+    }
+    .tab.pulling { transform: translateY(12px) scale(.985); filter: brightness(1.1); box-shadow: 0 0 0 2px rgba(124,58,237,.3); }
     .tab.pulled { background: #0f172a; }
     .tab.win { background: linear-gradient(180deg, #14532d, #166534); }
     .tab.lose { background: linear-gradient(180deg, #7f1d1d, #991b1b); }
     .tab.win::after, .tab.lose::after, .tab.pulled::after { content: attr(data-label); }
-    .log { margin-top: 12px; min-height: 1.5em; color: var(--muted); line-height: 1.5; }
-    .fine { color: var(--muted); font-size: .92rem; margin-top: 6px; }
-    .pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: rgba(255,255,255,.06); color: var(--muted); width: fit-content; }
-    .version { position: fixed; left: 12px; bottom: 10px; font-size: 12px; color: rgba(255,255,255,.45); user-select: none; z-index: 50; }
+    .result-banner {
+      margin-top: 14px; min-height: 2.2em; padding: 12px 14px; border-radius: 16px; background: rgba(255,255,255,.05);
+      color: var(--muted); line-height: 1.5; transition: transform .2s ease, opacity .2s ease;
+    }
+    .result-banner.show { transform: translateY(0); opacity: 1; }
+    .result-banner.hidden { opacity: .4; }
+    .floating {
+      position: absolute; pointer-events: none; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      font-size: clamp(1.2rem, 4vw, 2rem); font-weight: 900; opacity: 0; animation: floatUp .9s ease forwards;
+    }
+    @keyframes floatUp { 0% { transform: translate(-50%, -20%); opacity: 0; } 20% { opacity: 1; } 100% { transform: translate(-50%, -110%); opacity: 0; } }
+    .pulse { animation: pulse .55s ease; }
+    @keyframes pulse { 0% { transform: scale(1); } 40% { transform: scale(1.02); } 100% { transform: scale(1); } }
+    .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 110; }
+    .confetti i {
+      position: absolute; width: 10px; height: 16px; border-radius: 3px; opacity: 0;
+      animation: confettiFall .9s ease-out forwards;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(540deg); opacity: 0; }
+    }
+    .version { position: fixed; left: 12px; bottom: 10px; font-size: 12px; color: rgba(255,255,255,.45); user-select: none; z-index: 120; }
     .sound { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .muted { color: var(--muted); }
   </style>
 </head>
 <body>
+  <div class="confetti" id="confetti"></div>
   <main class="app">
     <section class="hero">
-      <div class="pill">🎟️ Demo game • no real money</div>
+      <div class="badge">🎟️ Demo game • no real money</div>
       <h1>Lucky Tabs</h1>
-      <p class="sub">Start with 100 tokens. Each ticket costs 5 tokens. Every ticket gives you 5 tabs to pull. Wins are rare, so hitting one feels extra nice.</p>
+      <p class="sub">Start with 100 tokens. Buy tickets, pull them open, and stash the winnings in inventory until you redeem them.</p>
     </section>
 
     <section class="grid">
       <div class="card stats">
         <div class="stat"><div class="label">Tokens</div><div class="value" id="tokens">100</div></div>
-        <div class="stat"><div class="label">Ticket Cost</div><div class="value">5</div></div>
-        <div class="stat"><div class="label">Tabs per Ticket</div><div class="value">5</div></div>
-        <div class="actions">
-          <button id="buyBtn" onclick="buyTicket()">Buy Ticket</button>
+        <div class="stat"><div class="label">Pending Winnings</div><div class="value" id="pending">0</div></div>
+        <div class="stat"><div class="label">Redeemed Total</div><div class="value" id="redeemedTotal">0</div></div>
+        <div class="actions row">
+          <button id="redeemAllBtn" class="secondary" onclick="redeemAll()">Redeem All</button>
           <button class="secondary" onclick="resetGame()">Reset Game</button>
         </div>
-        <p class="fine">Tip: drag a tab downward to pull it open.</p>
+        <div class="ticket-types" id="ticketTypes"></div>
       </div>
 
-      <div class="card">
-        <div class="label">Current Ticket</div>
-        <div class="ticket" id="ticket"></div>
-        <div class="log" id="log">Buy a ticket to start.</div>
+      <div class="card inventory">
+        <div class="ticket-head">
+          <div>
+            <div class="label">Inventory</div>
+            <div class="muted">Open any ticket to continue pulling or redeem it later.</div>
+          </div>
+        </div>
+        <div class="ticket-list" id="ticketList"></div>
+        <div class="result-banner hidden" id="lobbyStatus">No tickets bought yet.</div>
       </div>
     </section>
   </main>
 
-  <div class="version">v1.3</div>
+  <section class="ticket-mode" id="ticketMode">
+    <div class="ticket-stage">
+      <div class="ticket-top">
+        <div>
+          <h2 class="ticket-title" id="activeTitle">Ticket</h2>
+          <div class="ticket-meta" id="activeMeta">Pull tabs to reveal winnings. Nothing gets added automatically.</div>
+        </div>
+        <div class="row" style="grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(100%, 270px);">
+          <button class="secondary" onclick="closeTicketMode()">Back</button>
+          <button class="secondary" onclick="redeemActiveTicket()">Redeem This</button>
+        </div>
+      </div>
+      <div class="ticket-grid" id="activeTabs"></div>
+      <div class="result-banner" id="activeResult">Buy a ticket to begin.</div>
+    </div>
+  </section>
+
+  <div class="version">v1.4</div>
 
   <script>
-    let tokens = 100;
-    let ticketOpen = false;
-    let remaining = 0;
-    let ticketResultShown = false;
+    const STORAGE_KEY = 'lucky_tabs_state_v4';
+    const ticketTypes = [
+      {
+        id: 'classic5',
+        name: 'Classic 5',
+        tabs: 5,
+        cost: 8,
+        rewardTable: [[0.95, 0], [0.985, 5], [0.997, 10], [1, 20]],
+        desc: '5 tabs • cheap and common'
+      },
+      {
+        id: 'jumbo10',
+        name: 'Jumbo 10',
+        tabs: 10,
+        cost: 15,
+        rewardTable: [[0.97, 0], [0.992, 5], [0.998, 10], [1, 20]],
+        desc: '10 tabs • longer pulls'
+      },
+      {
+        id: 'rare1',
+        name: 'Rare 1',
+        tabs: 1,
+        cost: 25,
+        rewardTable: [[0.8, 0], [0.93, 10], [0.985, 25], [0.998, 50], [1, 100]],
+        desc: '1 tab • rare and spicy'
+      }
+    ];
+
+    let state = loadState();
     let audioCtx = null;
+    let activeTicketId = null;
 
-    const tokensEl = document.getElementById('tokens');
-    const ticketEl = document.getElementById('ticket');
-    const logEl = document.getElementById('log');
-    const buyBtn = document.getElementById('buyBtn');
+    const els = {
+      tokens: document.getElementById('tokens'),
+      pending: document.getElementById('pending'),
+      redeemedTotal: document.getElementById('redeemedTotal'),
+      ticketTypes: document.getElementById('ticketTypes'),
+      ticketList: document.getElementById('ticketList'),
+      lobbyStatus: document.getElementById('lobbyStatus'),
+      ticketMode: document.getElementById('ticketMode'),
+      activeTitle: document.getElementById('activeTitle'),
+      activeMeta: document.getElementById('activeMeta'),
+      activeTabs: document.getElementById('activeTabs'),
+      activeResult: document.getElementById('activeResult'),
+      confetti: document.getElementById('confetti'),
+      redeemAllBtn: document.getElementById('redeemAllBtn')
+    };
 
-    function updateUI() {
-      tokensEl.textContent = tokens;
-      buyBtn.disabled = tokens < 5 || ticketOpen;
-      if (tokens < 5 && !ticketOpen) logEl.textContent = 'Not enough tokens for another ticket.';
+    function makeDefaultState() {
+      return { tokens: 100, redeemedTotal: 0, tickets: [], lastId: 0, lastMessage: 'No tickets bought yet.' };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return makeDefaultState();
+        const parsed = JSON.parse(raw);
+        return { ...makeDefaultState(), ...parsed, tickets: Array.isArray(parsed.tickets) ? parsed.tickets : [] };
+      } catch {
+        return makeDefaultState();
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
     function getAudio() {
@@ -114,92 +254,257 @@
       return audioCtx;
     }
 
-    function beep(type) {
+    function beep(kind) {
       const ctx = getAudio();
       const now = ctx.currentTime;
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.connect(g);
-      g.connect(ctx.destination);
-      if (type === 'pull') {
-        o.type = 'triangle';
-        o.frequency.setValueAtTime(220, now);
-        o.frequency.exponentialRampToValueAtTime(170, now + 0.08);
-        g.gain.setValueAtTime(0.0001, now);
-        g.gain.exponentialRampToValueAtTime(0.06, now + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
-        o.start(now);
-        o.stop(now + 0.1);
-      } else if (type === 'win') {
-        o.type = 'sine';
-        o.frequency.setValueAtTime(440, now);
-        o.frequency.exponentialRampToValueAtTime(880, now + 0.12);
-        g.gain.setValueAtTime(0.0001, now);
-        g.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
-        o.start(now);
-        o.stop(now + 0.16);
-      } else {
-        o.type = 'square';
-        o.frequency.setValueAtTime(180, now);
-        o.frequency.exponentialRampToValueAtTime(110, now + 0.12);
-        g.gain.setValueAtTime(0.0001, now);
-        g.gain.exponentialRampToValueAtTime(0.06, now + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
-        o.start(now);
-        o.stop(now + 0.16);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+
+      if (kind === 'pull') {
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(220, now); osc.frequency.exponentialRampToValueAtTime(170, now + 0.08);
+        gain.gain.setValueAtTime(0.0001, now); gain.gain.exponentialRampToValueAtTime(0.05, now + 0.01); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+        osc.start(now); osc.stop(now + 0.1);
+      } else if (kind === 'win') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(420, now); osc.frequency.exponentialRampToValueAtTime(940, now + 0.14);
+        gain.gain.setValueAtTime(0.0001, now); gain.gain.exponentialRampToValueAtTime(0.08, now + 0.01); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+        osc.start(now); osc.stop(now + 0.18);
+      } else if (kind === 'lose') {
+        osc.type = 'square'; osc.frequency.setValueAtTime(180, now); osc.frequency.exponentialRampToValueAtTime(110, now + 0.12);
+        gain.gain.setValueAtTime(0.0001, now); gain.gain.exponentialRampToValueAtTime(0.05, now + 0.01); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+        osc.start(now); osc.stop(now + 0.16);
+      } else if (kind === 'redeem') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(520, now); osc.frequency.exponentialRampToValueAtTime(780, now + 0.12);
+        gain.gain.setValueAtTime(0.0001, now); gain.gain.exponentialRampToValueAtTime(0.08, now + 0.01); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+        osc.start(now); osc.stop(now + 0.16);
       }
     }
 
-    function resetGame() {
-      tokens = 100;
-      ticketOpen = false;
-      remaining = 0;
-      ticketResultShown = false;
-      ticketEl.innerHTML = '';
-      logEl.textContent = 'Game reset. Buy a ticket to start.';
-      updateUI();
+    function rewardFor(type) {
+      const r = Math.random();
+      for (const [limit, reward] of type.rewardTable) if (r < limit) return reward;
+      return 0;
     }
 
-    function buyTicket() {
-      if (ticketOpen || tokens < 5) return;
-      tokens -= 5;
-      ticketOpen = true;
-      remaining = 5;
-      ticketResultShown = false;
-      ticketEl.innerHTML = '';
-      logEl.textContent = 'Ticket opened. Pull all 5 tabs.';
+    function formatTicket(ticket) {
+      const type = ticketTypes.find(t => t.id === ticket.typeId);
+      return {
+        ...ticket,
+        typeName: type?.name || ticket.typeName,
+        tabsTotal: type?.tabs ?? ticket.tabsTotal,
+        tabsLeft: ticket.tabsLeft,
+        cost: type?.cost ?? ticket.cost,
+        desc: type?.desc ?? ticket.desc
+      };
+    }
 
-      for (let i = 0; i < 5; i++) {
+    function currentActiveTicket() {
+      return state.tickets.find(t => t.id === activeTicketId) || null;
+    }
+
+    function pendingTotal() {
+      return state.tickets.reduce((sum, t) => sum + (t.pending || 0), 0);
+    }
+
+    function updateStats() {
+      els.tokens.textContent = state.tokens;
+      els.pending.textContent = pendingTotal();
+      els.redeemedTotal.textContent = state.redeemedTotal;
+      els.redeemAllBtn.disabled = pendingTotal() <= 0;
+    }
+
+    function renderTicketTypes() {
+      els.ticketTypes.innerHTML = '';
+      ticketTypes.forEach(type => {
+        const btn = document.createElement('button');
+        btn.className = 'type-btn';
+        btn.innerHTML = `<strong>${type.name}</strong><small>${type.tabs} tabs • Cost ${type.cost} • ${type.desc}</small>`;
+        btn.onclick = () => buyTicket(type.id);
+        btn.disabled = state.tokens < type.cost;
+        els.ticketTypes.appendChild(btn);
+      });
+    }
+
+    function ticketStatus(ticket) {
+      if (ticket.redeemed) return 'redeemed';
+      if (ticket.tabsLeft < ticket.tabsTotal) return ticket.tabsLeft > 0 ? 'open' : 'done';
+      return 'open';
+    }
+
+    function renderInventory() {
+      els.ticketList.innerHTML = '';
+      if (!state.tickets.length) {
+        els.ticketList.innerHTML = '<div class="ticket-item">No tickets yet.</div>';
+        els.lobbyStatus.textContent = state.lastMessage || 'No tickets bought yet.';
+        els.lobbyStatus.classList.remove('hidden');
+        return;
+      }
+
+      state.tickets.slice().reverse().forEach(ticket => {
+        const type = ticketTypes.find(t => t.id === ticket.typeId);
+        const item = document.createElement('div');
+        item.className = 'ticket-item';
+        item.innerHTML = `
+          <div class="ticket-head">
+            <div>
+              <strong>${type?.name || ticket.typeName}</strong>
+              <div class="muted">${ticket.tabsTotal} tabs • Cost ${ticket.cost} • Pending ${ticket.pending || 0}</div>
+            </div>
+            <span class="badge ${ticketStatus(ticket)}">${ticket.redeemed ? 'Redeemed' : ticket.tabsLeft < ticket.tabsTotal ? (ticket.tabsLeft > 0 ? 'Open' : 'Done') : 'Open'}</span>
+          </div>
+          <div class="row" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+            <button class="secondary" ${ticket.redeemed ? 'disabled' : ''} data-open="${ticket.id}">Open</button>
+            <button class="secondary" ${(!ticket.pending || ticket.pending <= 0 || ticket.redeemed) ? 'disabled' : ''} data-redeem="${ticket.id}">Redeem</button>
+            <button class="secondary" ${ticket.tabsLeft <= 0 ? 'disabled' : ''} data-continue="${ticket.id}">${ticket.tabsLeft > 0 ? 'Continue' : 'Done'}</button>
+          </div>
+        `;
+        els.ticketList.appendChild(item);
+      });
+
+      els.ticketList.querySelectorAll('[data-open]').forEach(btn => btn.onclick = () => openTicket(btn.getAttribute('data-open')));
+      els.ticketList.querySelectorAll('[data-redeem]').forEach(btn => btn.onclick = () => redeemTicket(btn.getAttribute('data-redeem')));
+      els.ticketList.querySelectorAll('[data-continue]').forEach(btn => btn.onclick = () => openTicket(btn.getAttribute('data-continue')));
+      els.lobbyStatus.textContent = state.lastMessage || 'Inventory ready.';
+      els.lobbyStatus.classList.remove('hidden');
+    }
+
+    function syncUI() {
+      updateStats();
+      renderTicketTypes();
+      renderInventory();
+      saveState();
+    }
+
+    function setActiveTicket(id) {
+      activeTicketId = id;
+      const ticket = currentActiveTicket();
+      if (!ticket || ticket.redeemed) {
+        document.body.classList.remove('ticket-active');
+        els.activeResult.textContent = 'Buy a ticket to begin.';
+        els.activeTabs.innerHTML = '';
+        return;
+      }
+      document.body.classList.add('ticket-active');
+      const type = ticketTypes.find(t => t.id === ticket.typeId);
+      els.activeTitle.textContent = type?.name || ticket.typeName;
+      els.activeMeta.textContent = `${type?.tabs ?? ticket.tabsTotal} tabs • Pending winnings: ${ticket.pending || 0} • Tabs left: ${ticket.tabsLeft}`;
+      els.activeResult.textContent = ticket.lastMessage || 'Pull the tabs.';
+      els.activeTabs.innerHTML = '';
+
+      for (let i = 0; i < ticket.tabsTotal; i++) {
+        const pulled = i < (ticket.tabsTotal - ticket.tabsLeft);
         const tab = document.createElement('div');
-        tab.className = 'tab';
-        tab.dataset.label = 'PULL';
-        tab.setAttribute('role', 'button');
-        tab.setAttribute('aria-label', 'Pull tab ' + (i + 1));
-        attachPullGesture(tab);
-        ticketEl.appendChild(tab);
+        tab.className = 'tab' + (pulled ? ' pulled' : '');
+        tab.dataset.label = pulled ? (ticket.results?.[i] ? `+${ticket.results[i]}` : 'LOSE') : 'PULL';
+        if (pulled) {
+          const reward = ticket.results?.[i] || 0;
+          if (reward > 0) tab.classList.add('win');
+          else tab.classList.add('lose');
+        }
+        attachPullGesture(tab, i);
+        els.activeTabs.appendChild(tab);
       }
-      beep('pull');
-      updateUI();
     }
 
-    function attachPullGesture(tab) {
-      let startY = 0;
-      let startX = 0;
-      let active = false;
-      let pointerId = null;
+    function openTicket(id) {
+      const ticket = state.tickets.find(t => t.id === id);
+      if (!ticket || ticket.redeemed) return;
+      setActiveTicket(id);
+      state.lastMessage = `Opened ${ticket.typeName || id}. Pull tabs to build pending winnings.`;
+      syncUI();
+      beep('pull');
+    }
 
+    function closeTicketMode() {
+      document.body.classList.remove('ticket-active');
+      activeTicketId = null;
+      state.lastMessage = 'Back to inventory.';
+      syncUI();
+    }
+
+    function showFloating(text, kind='') {
+      const el = document.createElement('div');
+      el.className = 'floating';
+      el.textContent = text;
+      el.style.color = kind === 'win' ? '#86efac' : kind === 'lose' ? '#fca5a5' : '#fff';
+      els.ticketMode.appendChild(el);
+      setTimeout(() => el.remove(), 950);
+    }
+
+    function confettiBurst() {
+      els.confetti.innerHTML = '';
+      const colors = ['#22c55e', '#60a5fa', '#f59e0b', '#e879f9', '#f43f5e'];
+      for (let i = 0; i < 18; i++) {
+        const p = document.createElement('i');
+        p.style.left = Math.random() * 100 + 'vw';
+        p.style.top = '-10px';
+        p.style.background = colors[i % colors.length];
+        p.style.transform = `rotate(${Math.random()*180}deg)`;
+        p.style.animationDuration = (0.7 + Math.random() * 0.5) + 's';
+        p.style.width = (8 + Math.random() * 8) + 'px';
+        p.style.height = (10 + Math.random() * 10) + 'px';
+        els.confetti.appendChild(p);
+      }
+      setTimeout(() => els.confetti.innerHTML = '', 1200);
+    }
+
+    function pullTab(index) {
+      const ticket = currentActiveTicket();
+      if (!ticket || ticket.redeemed || ticket.tabsLeft <= 0) return;
+      const type = ticketTypes.find(t => t.id === ticket.typeId);
+      const activeTab = els.activeTabs.children[index];
+      if (!activeTab || activeTab.classList.contains('pulled')) return;
+
+      beep('pull');
+      activeTab.classList.add('pulling');
+      setTimeout(() => {
+        const reward = rewardFor(type);
+        activeTab.classList.remove('pulling');
+        activeTab.classList.add('pulled');
+        ticket.tabsLeft -= 1;
+        ticket.results = ticket.results || [];
+        ticket.results[index] = reward;
+        if (reward > 0) {
+          ticket.pending = (ticket.pending || 0) + reward;
+          activeTab.classList.add('win');
+          activeTab.dataset.label = `+${reward}`;
+          state.lastMessage = `Nice. +${reward} moved to inventory.`;
+          ticket.lastMessage = `Pending winnings: ${ticket.pending}`;
+          beep('win');
+          showFloating(`+${reward}`, 'win');
+          if (reward >= 25) confettiBurst();
+        } else {
+          activeTab.classList.add('lose');
+          activeTab.dataset.label = 'LOSE';
+          state.lastMessage = 'That tab missed.';
+          ticket.lastMessage = 'No deposit yet. Keep pulling or redeem later.';
+          beep('lose');
+          showFloating('LOSE', 'lose');
+        }
+
+        if (ticket.tabsLeft <= 0) {
+          ticket.tabsLeft = 0;
+          ticket.done = true;
+          ticket.lastMessage = ticket.pending > 0 ? `Done. ${ticket.pending} pending in inventory.` : 'Done. No winnings this ticket.';
+          state.lastMessage = ticket.pending > 0 ? `Ticket done with ${ticket.pending} pending.` : 'Ticket done with no winnings.';
+        }
+        syncUI();
+        setActiveTicket(ticket.id);
+      }, 180);
+    }
+
+    function attachPullGesture(tab, index) {
+      let startY = 0, startX = 0, active = false, pointerId = null;
       const cleanup = () => {
         active = false;
         tab.classList.remove('pulling');
         if (pointerId !== null && tab.releasePointerCapture) {
-          try { tab.releasePointerCapture(pointerId); } catch (e) {}
+          try { tab.releasePointerCapture(pointerId); } catch {}
         }
         window.removeEventListener('pointermove', move);
         window.removeEventListener('pointerup', end);
         window.removeEventListener('pointercancel', end);
       };
-
       const move = (ev) => {
         if (!active || tab.classList.contains('pulled')) return;
         const dy = ev.clientY - startY;
@@ -208,69 +513,106 @@
         if (dy > 70 && dx < 36) {
           cleanup();
           tab.style.transform = '';
-          pullTab(tab);
+          pullTab(index);
         }
       };
-
-      const end = () => {
-        if (!active) return;
-        tab.style.transform = '';
-        cleanup();
-      };
-
+      const end = () => { if (!active) return; tab.style.transform = ''; cleanup(); };
       tab.addEventListener('pointerdown', (ev) => {
-        if (!ticketOpen || tab.classList.contains('pulled')) return;
+        const ticket = currentActiveTicket();
+        if (!ticket || ticket.redeemed || ticket.tabsLeft <= 0) return;
+        const pulledCount = ticket.tabsTotal - ticket.tabsLeft;
+        if (index < pulledCount) return;
         ev.preventDefault();
-        active = true;
-        pointerId = ev.pointerId;
-        startY = ev.clientY;
-        startX = ev.clientX;
-        tab.classList.add('pulling');
-        if (tab.setPointerCapture) {
-          try { tab.setPointerCapture(ev.pointerId); } catch (e) {}
-        }
+        active = true; pointerId = ev.pointerId; startY = ev.clientY; startX = ev.clientX; tab.classList.add('pulling');
+        if (tab.setPointerCapture) { try { tab.setPointerCapture(ev.pointerId); } catch {} }
         window.addEventListener('pointermove', move, { passive: true });
         window.addEventListener('pointerup', end, { passive: true });
         window.addEventListener('pointercancel', end, { passive: true });
       }, { passive: false });
     }
 
-    function pullTab(tab) {
-      if (!ticketOpen || tab.classList.contains('pulled')) return;
+    function buyTicket(typeId) {
+      const type = ticketTypes.find(t => t.id === typeId);
+      if (!type || state.tokens < type.cost) return;
+      state.tokens -= type.cost;
+      const ticket = {
+        id: String(++state.lastId),
+        typeId: type.id,
+        typeName: type.name,
+        tabsTotal: type.tabs,
+        tabsLeft: type.tabs,
+        cost: type.cost,
+        pending: 0,
+        results: [],
+        redeemed: false,
+        done: false,
+        lastMessage: 'Fresh ticket. Pull it open.'
+      };
+      state.tickets.push(ticket);
+      state.lastMessage = `Bought ${type.name}. Lobby hidden until you’re done.`;
+      activeTicketId = ticket.id;
+      syncUI();
+      setActiveTicket(ticket.id);
       beep('pull');
-
-      const rand = Math.random();
-      let reward = 0;
-      if (rand < 0.8) reward = 0;
-      else if (rand < 0.95) reward = 5;
-      else if (rand < 0.99) reward = 10;
-      else reward = 20;
-
-      tab.classList.add('pulled');
-      tab.textContent = '';
-      if (reward === 0) {
-        tab.dataset.label = 'LOSE';
-        tab.classList.add('lose');
-        beep('lose');
-      } else {
-        tab.dataset.label = `+${reward}`;
-        tab.classList.add('win');
-        tokens += reward;
-        beep('win');
-        if (!ticketResultShown) logEl.textContent = `Nice, you got +${reward}`;
-        ticketResultShown = true;
-      }
-
-      remaining -= 1;
-      if (remaining === 0) {
-        ticketOpen = false;
-        if (!ticketResultShown) logEl.textContent = 'No wins this round.';
-        else logEl.textContent = 'Ticket done. Try again.';
-      }
-      updateUI();
     }
 
-    updateUI();
+    function redeemTicket(id) {
+      const ticket = state.tickets.find(t => t.id === id);
+      if (!ticket || ticket.redeemed || (ticket.pending || 0) <= 0) return;
+      state.tokens += ticket.pending;
+      state.redeemedTotal += ticket.pending;
+      ticket.pending = 0;
+      ticket.redeemed = true;
+      ticket.lastMessage = 'Redeemed.';
+      state.lastMessage = `Redeemed ${ticket.typeName || 'ticket'}.`;
+      beep('redeem');
+      showFloating('REDEEMED', 'win');
+      syncUI();
+      if (activeTicketId === ticket.id) setActiveTicket(ticket.id);
+    }
+
+    function redeemActiveTicket() {
+      const ticket = currentActiveTicket();
+      if (!ticket) return;
+      redeemTicket(ticket.id);
+    }
+
+    function redeemAll() {
+      const redeemable = state.tickets.filter(t => !t.redeemed && (t.pending || 0) > 0);
+      if (!redeemable.length) return;
+      const total = redeemable.reduce((sum, t) => sum + (t.pending || 0), 0);
+      redeemable.forEach(t => { t.redeemed = true; t.pending = 0; t.lastMessage = 'Redeemed.'; });
+      state.tokens += total;
+      state.redeemedTotal += total;
+      state.lastMessage = `Redeemed all tickets for +${total}.`;
+      beep('redeem');
+      confettiBurst();
+      showFloating(`+${total}`, 'win');
+      syncUI();
+      if (activeTicketId) setActiveTicket(activeTicketId);
+    }
+
+    function closeTicketMode() {
+      document.body.classList.remove('ticket-active');
+      activeTicketId = null;
+      state.lastMessage = 'Back to inventory.';
+      syncUI();
+    }
+
+    function resetGame() {
+      state = makeDefaultState();
+      activeTicketId = null;
+      document.body.classList.remove('ticket-active');
+      syncUI();
+    }
+
+    function updateView() {
+      syncUI();
+      if (activeTicketId) setActiveTicket(activeTicketId);
+    }
+
+    syncUI();
+    updateView();
   </script>
 </body>
 </html>
