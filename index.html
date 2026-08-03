@@ -156,15 +156,15 @@
     </div>
   </section>
 
-  <div class="version">v1.7</div>
+  <div class="version">v1.8</div>
 
   <script>
-    const STORAGE_KEY = 'lucky_tabs_state_v7';
+    const STORAGE_KEY = 'lucky_tabs_state_v8';
     const BANK_DAILY_LIMIT = 1000;
     const TICKET_TYPES = [
-      { id: 'classic5', name: 'Classic 5', tabs: 5, cost: 8, desc: '5 tabs • common', rewardTable: [[0.68, 0], [0.86, 5], [0.95, 10], [0.99, 20], [1, 50]] },
-      { id: 'jumbo10', name: 'Jumbo 10', tabs: 10, cost: 15, desc: '10 tabs • longer run', rewardTable: [[0.62, 0], [0.82, 5], [0.93, 10], [0.985, 20], [1, 50]] },
-      { id: 'rare1', name: 'Rare 1', tabs: 1, cost: 25, desc: '1 tab • big gamble', rewardTable: [[0.38, 0], [0.62, 10], [0.82, 25], [0.95, 50], [1, 100]] }
+      { id: 'classic5', name: 'Classic 5', tabs: 5, cost: 8, desc: '5 tabs • common', rewardTable: [[0.86, 0], [0.95, 5], [0.985, 10], [0.997, 20], [1, 50]] },
+      { id: 'jumbo10', name: 'Jumbo 10', tabs: 10, cost: 15, desc: '10 tabs • longer run', rewardTable: [[0.9, 0], [0.97, 5], [0.992, 10], [0.999, 20], [1, 50]] },
+      { id: 'rare1', name: 'Rare 1', tabs: 1, cost: 25, desc: '1 tab • big gamble', rewardTable: [[0.75, 0], [0.9, 10], [0.97, 25], [0.995, 50], [1, 100]] }
     ];
 
     let state = loadState();
