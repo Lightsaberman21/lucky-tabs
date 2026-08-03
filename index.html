@@ -97,6 +97,16 @@
           <div class="muted" id="depositLeft">Deposit left today: 1000</div>
         </div>
 
+
+        <div class="bank-box stack">
+          <div class="label">Withdraw from Bank</div>
+          <div class="muted">Move tokens back into your wallet anytime.</div>
+          <div class="input-row">
+            <input id="withdrawAmount" type="number" min="1" placeholder="Amount to withdraw" />
+            <button class="secondary" onclick="withdrawTokens()">Withdraw</button>
+          </div>
+          <div class="muted" id="withdrawHint">Withdraws are unlimited.</div>
+        </div>
         <div class="borrow-box stack">
           <div class="label">Borrow Tokens</div>
           <div class="muted">Borrowed tokens go into your wallet and become repayable from your tokens.</div>
@@ -146,10 +156,10 @@
     </div>
   </section>
 
-  <div class="version">v1.6</div>
+  <div class="version">v1.7</div>
 
   <script>
-    const STORAGE_KEY = 'lucky_tabs_state_v6';
+    const STORAGE_KEY = 'lucky_tabs_state_v7';
     const BANK_DAILY_LIMIT = 1000;
     const TICKET_TYPES = [
       { id: 'classic5', name: 'Classic 5', tabs: 5, cost: 8, desc: '5 tabs • common', rewardTable: [[0.68, 0], [0.86, 5], [0.95, 10], [0.99, 20], [1, 50]] },
@@ -179,6 +189,7 @@
       redeemAllBtn: document.getElementById('redeemAllBtn'),
       depositAmount: document.getElementById('depositAmount'),
       borrowAmount: document.getElementById('borrowAmount'),
+      withdrawAmount: document.getElementById('withdrawAmount'),
       depositLeft: document.getElementById('depositLeft'),
       loanLeft: document.getElementById('loanLeft')
     };
@@ -360,6 +371,19 @@
       state.depositUsedToday += allowed;
       state.lastMessage = `Deposited ${allowed} into bank.`;
       els.depositAmount.value = '';
+      beep('bank');
+      syncUI();
+    }
+
+    function withdrawTokens(){
+      const amount = Math.floor(Number(els.withdrawAmount.value || 0));
+      if (!amount || amount <= 0) return;
+      const allowed = Math.min(amount, state.bankBalance);
+      if (allowed <= 0) return;
+      state.bankBalance -= allowed;
+      state.tokens += allowed;
+      state.lastMessage = `Withdrew ${allowed} from bank.`;
+      els.withdrawAmount.value = '';
       beep('bank');
       syncUI();
     }
